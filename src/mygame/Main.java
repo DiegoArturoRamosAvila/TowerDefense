@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 public class Main extends SimpleApplication {
+    private static Main instance;
 
     public static final List<AnimatedPlayer> players = new ArrayList<>();
     private final List<EnemyType> enemyTypes = new ArrayList<>();
@@ -37,6 +38,8 @@ public class Main extends SimpleApplication {
     private float dineroTimer = 0f;
     private float intervaloDinero = 1f; // cada 1 segundo
     private BitmapText textoDinero;
+    
+    private final Map<String, Integer> enemyRewards = new HashMap<>();
 
     public static void main(String[] args) {
         Main app = new Main();
@@ -49,8 +52,7 @@ public class Main extends SimpleApplication {
 
     @Override
     public void simpleInitApp() {
-        inputManager.setCursorVisible(true);
-
+        instance = this;
         Picture bg = new Picture("Fondo");
         bg.setImage(assetManager, "Textures/Fondo.png", false);
         bg.setWidth(settings.getWidth());
@@ -98,42 +100,51 @@ public class Main extends SimpleApplication {
         playerCastle = new Castle(assetManager, guiNode, 25, 50, 500, false);
         enemyCastle = new Castle(assetManager, guiNode, 1150, 50, 500, true);
 
-        enemyTypes.add(new EnemyType("Textures/CaminaRocaMalo/caminaRocaMalo_", "Textures/PegaRocaMalo/pegaRocaMalo_", 214, 10f, 60, 15));
-        enemyTypes.add(new EnemyType("Textures/CaminaGarroteMalo/caminaGarroteMalo_", "Textures/PegaGarroteMalo/pegaGarroteMalo_", 214, 20f, 80, 20));
-        enemyTypes.add(new EnemyType("Textures/CaminaAntorchaMalo/caminaAntorchaMalo_", "Textures/PegaAntorchaMalo/pegaAntorchaMalo_", 214, 80f, 100, 25));
-        enemyTypes.add(new EnemyType("Textures/CaminaHorquillaMalo/caminaHorquillaMalo_", "Textures/PegaHorquillaMalo/pegaHorquillaMalo_", 214, 140f, 140, 40));
+        enemyTypes.add(new EnemyType("Textures/CaminaRocaMalo/caminaRocaMalo_", "Textures/PegaRocaMalo/pegaRocaMalo_", 214, 5f, 60, 15, "Roca"));
+        enemyTypes.add(new EnemyType("Textures/CaminaGarroteMalo/caminaGarroteMalo_", "Textures/PegaGarroteMalo/pegaGarroteMalo_", 214, 15f, 80, 20, "Garrote"));
+        enemyTypes.add(new EnemyType("Textures/CaminaAntorchaMalo/caminaAntorchaMalo_", "Textures/PegaAntorchaMalo/pegaAntorchaMalo_", 214, 30f, 100, 25, "Antorcha"));
+        enemyTypes.add(new EnemyType("Textures/CaminaHorquillaMalo/caminaHorquillaMalo_", "Textures/PegaHorquillaMalo/pegaHorquillaMalo_", 214, 60f, 140, 40, "Horquilla"));
 
         inputManager.addMapping("SpawnQ", new KeyTrigger(KeyInput.KEY_Q));
         inputManager.addMapping("SpawnW", new KeyTrigger(KeyInput.KEY_W));
         inputManager.addMapping("SpawnE", new KeyTrigger(KeyInput.KEY_E));
         inputManager.addMapping("SpawnR", new KeyTrigger(KeyInput.KEY_R));
         inputManager.addListener(actionListener, "SpawnQ", "SpawnW", "SpawnE", "SpawnR");
+        
+        enemyRewards.put("Roca", 5);
+        enemyRewards.put("Garrote", 10);
+        enemyRewards.put("Antorcha", 20);
+        enemyRewards.put("Horquilla", 25);
+    }
+    
+    public static Main instance() {
+    return instance;
     }
 
     private final ActionListener actionListener = (name, isPressed, tpf) -> {
         if (!isPressed) return;
         switch (name) {
             case "SpawnQ":
-                if (dinero >= 10) {
-                    spawnAnimatedPlayer("Textures/CaminaRoca/caminaRoca_", "Textures/PegaRoca/pegaRoca_", 30, 214, 60, 15);
-                    dinero -= 10;
+                if (dinero >= 5) {
+                    spawnAnimatedPlayer("Textures/CaminaRoca/caminaRoca_", "Textures/PegaRoca/pegaRoca_", 30, 214, 60, 10, "Roca");
+                    dinero -= 5;
                 }
                 break;
             case "SpawnW":
-                if (dinero >= 15) {
-                    spawnAnimatedPlayer("Textures/CaminaGarrote/caminaGarrote_", "Textures/PegaGarrote/pegaGarrote_", 30, 214, 80, 20);
-                    dinero -= 15;
+                if (dinero >= 10) {
+                    spawnAnimatedPlayer("Textures/CaminaGarrote/caminaGarrote_", "Textures/PegaGarrote/pegaGarrote_", 30, 214, 80, 20, "Garrote");
+                    dinero -= 10;
                 }
                 break;
             case "SpawnE":
-                if (dinero >= 20) {
-                    spawnAnimatedPlayer("Textures/CaminaAntorcha/caminaAntorcha_", "Textures/PegaAntorcha/pegaAntorcha_", 30, 214, 100, 25);
-                    dinero -= 20;
+                if (dinero >= 15) {
+                    spawnAnimatedPlayer("Textures/CaminaAntorcha/caminaAntorcha_", "Textures/PegaAntorcha/pegaAntorcha_", 30, 214, 110, 30, "Antorcha");
+                    dinero -= 15;
                 }
                 break;
             case "SpawnR":
                 if (dinero >= 30) {
-                    spawnAnimatedPlayer("Textures/CaminaHorquilla/caminaHorquilla_", "Textures/PegaHorquilla/pegaHorquilla_", 30, 214, 140, 40);
+                    spawnAnimatedPlayer("Textures/CaminaHorquilla/caminaHorquilla_", "Textures/PegaHorquilla/pegaHorquilla_", 30, 214, 150, 50, "Horquilla");
                     dinero -= 30;
                 }
                 break;
@@ -141,13 +152,13 @@ public class Main extends SimpleApplication {
         textoDinero.setText("Dinero: " + dinero); // Actualiza el texto
     };
 
-    private void spawnAnimatedPlayer(String idlePrefix, String attackPrefix, float startX, float startY, int vida, int ataque) {
-        AnimatedPlayer player = new AnimatedPlayer(assetManager, guiNode, idlePrefix, attackPrefix, 64, 64, startX, startY, 100f, false, vida, ataque);
+    private void spawnAnimatedPlayer(String idlePrefix, String attackPrefix, float startX, float startY, int vida, int ataque, String tipo) {
+        AnimatedPlayer player = new AnimatedPlayer(assetManager, guiNode, idlePrefix, attackPrefix, 64, 64, startX, startY, 100f, false, vida, ataque, tipo);
         players.add(player);
     }
 
-    private void spawnEnemyPlayer(String idlePrefix, String attackPrefix, float startX, float startY, int vida, int ataque) {
-        AnimatedPlayer enemy = new AnimatedPlayer(assetManager, guiNode, idlePrefix, attackPrefix, 64, 64, startX, startY, -100f, true, vida, ataque);
+    private void spawnEnemyPlayer(String idlePrefix, String attackPrefix, float startX, float startY, int vida, int ataque, String tipo) {
+        AnimatedPlayer enemy = new AnimatedPlayer(assetManager, guiNode, idlePrefix, attackPrefix, 64, 64, startX, startY, -100f, true, vida, ataque, tipo);
         enemy.setEndX(45f);
         players.add(enemy);
     }
@@ -173,7 +184,7 @@ public class Main extends SimpleApplication {
         for (EnemyType type : enemyTypes) {
             type.timer += tpf;
             if (type.timer >= type.spawnInterval) {
-                spawnEnemyPlayer(type.idlePrefix, type.attackPrefix, 1200, type.startY, type.vida, type.ataque);
+                spawnEnemyPlayer(type.idlePrefix, type.attackPrefix, 1200, type.startY, type.vida, type.ataque, type.tipo);
                 type.timer = 0;
             }
         }
@@ -292,6 +303,7 @@ public class Main extends SimpleApplication {
         String currentAnimationName;
         float speed, endX = 1125f;
         boolean isStopped = false, isEnemy;
+        String tipo;
 
         int vida;
         int ataque;
@@ -302,7 +314,7 @@ public class Main extends SimpleApplication {
         public AnimatedPlayer(AssetManager assetManager, Node guiNode,
                               String idlePrefix, String attackPrefix,
                               float width, float height, float startX, float startY,
-                              float speed, boolean isEnemy, int vida, int ataque) {
+                              float speed, boolean isEnemy, int vida, int ataque, String tipo) {
 
             this.picture = new Picture("Player");
             picture.setImage(assetManager, idlePrefix + "0.png", true);
@@ -315,6 +327,7 @@ public class Main extends SimpleApplication {
             this.isEnemy = isEnemy;
             this.vida = vida;
             this.ataque = ataque;
+            this.tipo = tipo;
 
             animations.put("idle", new FrameAnimator(picture, generateFrames(idlePrefix), assetManager, 8));
             animations.put("attack", new FrameAnimator(picture, generateFrames(attackPrefix), assetManager, 8));
@@ -377,6 +390,10 @@ public class Main extends SimpleApplication {
             if (vida <= 0) {
                 picture.removeFromParent();
                 Main.players.remove(this);
+                if (isEnemy) {
+                    Integer recompensa = Main.instance().enemyRewards.getOrDefault(tipo, 0);
+                    Main.instance().agregarDinero(recompensa);
+                }
             }
         }
 
@@ -388,6 +405,7 @@ public class Main extends SimpleApplication {
 
         public void resume() {
             isStopped = false;
+            attackTimer = 0f;
             setAnimation("idle");
         }
 
@@ -415,17 +433,23 @@ public class Main extends SimpleApplication {
     }
 
     private static class EnemyType {
-        String idlePrefix, attackPrefix;
+        String idlePrefix, attackPrefix, tipo;
         float startY, spawnInterval, timer = 0;
         int vida, ataque;
 
-        public EnemyType(String idlePrefix, String attackPrefix, float startY, float spawnInterval, int vida, int ataque) {
+        public EnemyType(String idlePrefix, String attackPrefix, float startY, float spawnInterval, int vida, int ataque, String tipo) {
             this.idlePrefix = idlePrefix;
             this.attackPrefix = attackPrefix;
             this.startY = startY;
             this.spawnInterval = spawnInterval;
             this.vida = vida;
             this.ataque = ataque;
+            this.tipo = tipo;
         }
+    }
+    
+    public void agregarDinero(int cantidad) {
+        dinero += cantidad;
+        textoDinero.setText("Dinero: " + dinero);
     }
 }
