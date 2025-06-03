@@ -20,6 +20,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class Main extends SimpleApplication {
     private static Main instance;
@@ -36,8 +38,13 @@ public class Main extends SimpleApplication {
     
     private int dinero = 0;
     private float dineroTimer = 0f;
-    private float intervaloDinero = 1f; // cada 1 segundo
+    private float intervaloDinero = 0.1f; // cada 1 segundo
     private BitmapText textoDinero;
+    
+    private int nivelActual = 1;
+    private BitmapText textoNivel;
+    private BitmapText mensajeNivelSuperado;
+
     
     private final Map<String, Integer> enemyRewards = new HashMap<>();
 
@@ -92,7 +99,7 @@ public class Main extends SimpleApplication {
         textoDinero = new BitmapText(guiFont, false);
         textoDinero.setSize(guiFont.getCharSet().getRenderedSize());
         textoDinero.setColor(ColorRGBA.White);
-        textoDinero.setLocalTranslation(1100, 40, 0);
+        textoDinero.setLocalTranslation(1000, 40, 0);
         textoDinero.setText("Dinero: 0");
         guiNode.attachChild(textoDinero);
 
@@ -115,6 +122,13 @@ public class Main extends SimpleApplication {
         enemyRewards.put("Garrote", 10);
         enemyRewards.put("Antorcha", 20);
         enemyRewards.put("Horquilla", 25);
+        
+        textoNivel = new BitmapText(guiFont, false);
+        textoNivel.setSize(guiFont.getCharSet().getRenderedSize());
+        textoNivel.setColor(ColorRGBA.White);
+        textoNivel.setText("Nivel: " + nivelActual);
+        textoNivel.setLocalTranslation(settings.getWidth() - 200, settings.getHeight() - 20, 0);
+        guiNode.attachChild(textoNivel);
     }
     
     public static Main instance() {
@@ -203,8 +217,7 @@ public class Main extends SimpleApplication {
             System.out.println("¡Has perdido!");
             stop();
         } else if (enemyCastle.isDestroyed()) {
-            System.out.println("¡Has ganado!");
-            stop();
+            subirNivel();
         }
     }
 
@@ -434,7 +447,7 @@ public class Main extends SimpleApplication {
 
     private static class EnemyType {
         String idlePrefix, attackPrefix, tipo;
-        float startY, spawnInterval, timer = 0;
+        float startY, spawnInterval, spawnIntervalOriginal, timer = 0;
         int vida, ataque;
 
         public EnemyType(String idlePrefix, String attackPrefix, float startY, float spawnInterval, int vida, int ataque, String tipo) {
@@ -442,6 +455,7 @@ public class Main extends SimpleApplication {
             this.attackPrefix = attackPrefix;
             this.startY = startY;
             this.spawnInterval = spawnInterval;
+            this.spawnIntervalOriginal = spawnInterval; // guarda el valor inicial
             this.vida = vida;
             this.ataque = ataque;
             this.tipo = tipo;
@@ -451,5 +465,65 @@ public class Main extends SimpleApplication {
     public void agregarDinero(int cantidad) {
         dinero += cantidad;
         textoDinero.setText("Dinero: " + dinero);
+    }
+    
+    private void subirNivel() {
+        nivelActual++;
+        textoNivel.setText("Nivel: " + nivelActual);
+
+        // Reiniciar vida de las torres
+        playerCastle.vida = playerCastle.vidaMax;
+        playerCastle.updateHealthBar();
+        enemyCastle.vida = enemyCastle.vidaMax;
+        enemyCastle.updateHealthBar();
+
+        // Limpiar tropas de ambas listas
+        for (AnimatedPlayer p : new ArrayList<>(players)) {
+            p.picture.removeFromParent(); // quita el sprite de la pantalla
+        }
+        players.clear();
+        
+        mostrarMensajeNivelSuperado();
+        
+        //Aumentar recompensas
+        for (Map.Entry<String, Integer> entry : enemyRewards.entrySet()) {
+            int nuevaRecompensa = (int)(entry.getValue() * 1.1); 
+            enemyRewards.put(entry.getKey(), nuevaRecompensa);
+        }
+        
+        for (EnemyType type : enemyTypes) {
+            type.vida += 5;     // Más vida
+            type.ataque += 2;    // Más ataque
+            type.timer = 0;
+        }
+        
+        for (EnemyType type : enemyTypes) {
+            type.spawnInterval = type.spawnIntervalOriginal;
+        }
+
+        difficultyTimer = 0;
+        dinero = 0;
+    }
+    
+    private void mostrarMensajeNivelSuperado() {
+        mensajeNivelSuperado = new BitmapText(guiFont, false);
+        mensajeNivelSuperado.setSize(guiFont.getCharSet().getRenderedSize() * 2);
+        mensajeNivelSuperado.setColor(ColorRGBA.Yellow);
+        mensajeNivelSuperado.setText("¡Nivel superado!");
+        mensajeNivelSuperado.setLocalTranslation(settings.getWidth() / 2 - mensajeNivelSuperado.getLineWidth() / 2,
+                                                 settings.getHeight() / 2, 0);
+        guiNode.attachChild(mensajeNivelSuperado);
+
+        // Ocultar el mensaje después de 5 segundos
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                enqueue(() -> {
+                    guiNode.detachChild(mensajeNivelSuperado);
+                    return null;
+                });
+            }
+        }, 5000);
     }
 }
