@@ -29,8 +29,6 @@ public class Main extends SimpleApplication {
     public static final List<AnimatedPlayer> players = new ArrayList<>();
     private final List<EnemyType> enemyTypes = new ArrayList<>();
 
-    private float difficultyTimer = 0f;
-    private float difficultyInterval = 10f;
     private float spawnAcceleration = 0.90f;
 
     private static Castle playerCastle;
@@ -38,7 +36,7 @@ public class Main extends SimpleApplication {
     
     private int dinero = 0;
     private float dineroTimer = 0f;
-    private float intervaloDinero = 0.1f; // cada 1 segundo
+    private float intervaloDinero = 1f; 
     private BitmapText textoDinero;
     
     private int nivelActual = 1;
@@ -51,7 +49,7 @@ public class Main extends SimpleApplication {
     public static void main(String[] args) {
         Main app = new Main();
         AppSettings settings = new AppSettings(true);
-        settings.setTitle("Animación con vida y ataque");
+        settings.setTitle("Tower Defense");
         settings.setResolution(1280, 720);
         app.setSettings(settings);
         app.start();
@@ -105,12 +103,12 @@ public class Main extends SimpleApplication {
 
         // Inicializar castillos con hitbox virtual
         playerCastle = new Castle(assetManager, guiNode, 25, 50, 500, false);
-        enemyCastle = new Castle(assetManager, guiNode, 1150, 50, 500, true);
+        enemyCastle = new Castle(assetManager, guiNode, 1150, 50, 35, true);
 
-        enemyTypes.add(new EnemyType("Textures/CaminaRocaMalo/caminaRocaMalo_", "Textures/PegaRocaMalo/pegaRocaMalo_", 214, 5f, 60, 15, "Roca"));
-        enemyTypes.add(new EnemyType("Textures/CaminaGarroteMalo/caminaGarroteMalo_", "Textures/PegaGarroteMalo/pegaGarroteMalo_", 214, 15f, 80, 20, "Garrote"));
-        enemyTypes.add(new EnemyType("Textures/CaminaAntorchaMalo/caminaAntorchaMalo_", "Textures/PegaAntorchaMalo/pegaAntorchaMalo_", 214, 30f, 100, 25, "Antorcha"));
-        enemyTypes.add(new EnemyType("Textures/CaminaHorquillaMalo/caminaHorquillaMalo_", "Textures/PegaHorquillaMalo/pegaHorquillaMalo_", 214, 60f, 140, 40, "Horquilla"));
+        enemyTypes.add(new EnemyType("Textures/CaminaRocaMalo/caminaRocaMalo_", "Textures/PegaRocaMalo/pegaRocaMalo_", 214, 5f, 20, 5, "Roca"));
+        enemyTypes.add(new EnemyType("Textures/CaminaGarroteMalo/caminaGarroteMalo_", "Textures/PegaGarroteMalo/pegaGarroteMalo_", 214, 15f, 40, 10, "Garrote"));
+        enemyTypes.add(new EnemyType("Textures/CaminaAntorchaMalo/caminaAntorchaMalo_", "Textures/PegaAntorchaMalo/pegaAntorchaMalo_", 214, 30f, 60, 15, "Antorcha"));
+        enemyTypes.add(new EnemyType("Textures/CaminaHorquillaMalo/caminaHorquillaMalo_", "Textures/PegaHorquillaMalo/pegaHorquillaMalo_", 214, 60f, 100, 25, "Horquilla"));
 
         inputManager.addMapping("SpawnQ", new KeyTrigger(KeyInput.KEY_Q));
         inputManager.addMapping("SpawnW", new KeyTrigger(KeyInput.KEY_W));
@@ -118,10 +116,10 @@ public class Main extends SimpleApplication {
         inputManager.addMapping("SpawnR", new KeyTrigger(KeyInput.KEY_R));
         inputManager.addListener(actionListener, "SpawnQ", "SpawnW", "SpawnE", "SpawnR");
         
-        enemyRewards.put("Roca", 5);
-        enemyRewards.put("Garrote", 10);
-        enemyRewards.put("Antorcha", 20);
-        enemyRewards.put("Horquilla", 25);
+        enemyRewards.put("Roca", 0);
+        enemyRewards.put("Garrote", 5);
+        enemyRewards.put("Antorcha", 10);
+        enemyRewards.put("Horquilla", 15);
         
         textoNivel = new BitmapText(guiFont, false);
         textoNivel.setSize(guiFont.getCharSet().getRenderedSize());
@@ -132,7 +130,7 @@ public class Main extends SimpleApplication {
     }
     
     public static Main instance() {
-    return instance;
+        return instance;
     }
 
     private final ActionListener actionListener = (name, isPressed, tpf) -> {
@@ -140,7 +138,7 @@ public class Main extends SimpleApplication {
         switch (name) {
             case "SpawnQ":
                 if (dinero >= 5) {
-                    spawnAnimatedPlayer("Textures/CaminaRoca/caminaRoca_", "Textures/PegaRoca/pegaRoca_", 30, 214, 60, 10, "Roca");
+                    spawnAnimatedPlayer("Textures/CaminaRoca/caminaRoca_", "Textures/PegaRoca/pegaRoca_", 30, 214, 60, 15, "Roca");
                     dinero -= 5;
                 }
                 break;
@@ -152,13 +150,13 @@ public class Main extends SimpleApplication {
                 break;
             case "SpawnE":
                 if (dinero >= 15) {
-                    spawnAnimatedPlayer("Textures/CaminaAntorcha/caminaAntorcha_", "Textures/PegaAntorcha/pegaAntorcha_", 30, 214, 110, 30, "Antorcha");
+                    spawnAnimatedPlayer("Textures/CaminaAntorcha/caminaAntorcha_", "Textures/PegaAntorcha/pegaAntorcha_", 30, 214, 100, 25, "Antorcha");
                     dinero -= 15;
                 }
                 break;
             case "SpawnR":
                 if (dinero >= 30) {
-                    spawnAnimatedPlayer("Textures/CaminaHorquilla/caminaHorquilla_", "Textures/PegaHorquilla/pegaHorquilla_", 30, 214, 150, 50, "Horquilla");
+                    spawnAnimatedPlayer("Textures/CaminaHorquilla/caminaHorquilla_", "Textures/PegaHorquilla/pegaHorquilla_", 30, 214, 140, 35, "Horquilla");
                     dinero -= 30;
                 }
                 break;
@@ -182,7 +180,7 @@ public class Main extends SimpleApplication {
         // Generar dinero automáticamente
         dineroTimer += tpf;
         if (dineroTimer >= intervaloDinero) {
-            dinero += 1; // Gana 2 moneda por segundo
+            dinero += 1;
             dineroTimer = 0f;
             textoDinero.setText("Dinero: " + dinero);
         }
@@ -201,15 +199,6 @@ public class Main extends SimpleApplication {
                 spawnEnemyPlayer(type.idlePrefix, type.attackPrefix, 1200, type.startY, type.vida, type.ataque, type.tipo);
                 type.timer = 0;
             }
-        }
-
-        difficultyTimer += tpf;
-        if (difficultyTimer >= difficultyInterval) {
-            for (EnemyType type : enemyTypes) {
-                type.spawnInterval *= spawnAcceleration;
-                if (type.spawnInterval < 0.5f) type.spawnInterval = 0.5f;
-            }
-            difficultyTimer = 0f;
         }
 
         // Verificar victoria o derrota
@@ -273,12 +262,12 @@ public class Main extends SimpleApplication {
         }
 
         private Geometry createHealthBarBackground(AssetManager assetManager) {
-            Quad q = new Quad(102, 12); // un poco más grande que la barra roja
+            Quad q = new Quad(102, 12); 
             Geometry g = new Geometry("HealthBarBG", q);
             Material mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
             mat.setColor("Color", ColorRGBA.Black);
             g.setMaterial(mat);
-            g.setLocalTranslation(x - 1, y + 414, 0); // desplazado para que encaje con la barra roja
+            g.setLocalTranslation(x - 1, y + 414, 0);
             return g;
         }
 
@@ -288,7 +277,7 @@ public class Main extends SimpleApplication {
             Material mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
             mat.setColor("Color", ColorRGBA.Red);
             g.setMaterial(mat);
-            g.setLocalTranslation(x, y + 415, 1); // Z=1 para estar encima del fondo negro
+            g.setLocalTranslation(x, y + 415, 1);
             return g;
         }
 
@@ -403,6 +392,7 @@ public class Main extends SimpleApplication {
             if (vida <= 0) {
                 picture.removeFromParent();
                 Main.players.remove(this);
+                Main instancia = Main.instance();
                 if (isEnemy) {
                     Integer recompensa = Main.instance().enemyRewards.getOrDefault(tipo, 0);
                     Main.instance().agregarDinero(recompensa);
@@ -486,23 +476,28 @@ public class Main extends SimpleApplication {
         mostrarMensajeNivelSuperado();
         
         //Aumentar recompensas
-        for (Map.Entry<String, Integer> entry : enemyRewards.entrySet()) {
-            int nuevaRecompensa = (int)(entry.getValue() * 1.1); 
-            enemyRewards.put(entry.getKey(), nuevaRecompensa);
+        if(nivelActual >= 5){
+            for (Map.Entry<String, Integer> entry : enemyRewards.entrySet()) {
+                int nuevaRecompensa = (int)(entry.getValue() + 1); 
+                enemyRewards.put(entry.getKey(), nuevaRecompensa);
+            }
         }
         
         for (EnemyType type : enemyTypes) {
-            type.vida += 5;     // Más vida
-            type.ataque += 2;    // Más ataque
-            type.timer = 0;
-        }
-        
-        for (EnemyType type : enemyTypes) {
-            type.spawnInterval = type.spawnIntervalOriginal;
+            type.spawnInterval *= spawnAcceleration;
+            if (type.spawnInterval < 0.5f) type.spawnInterval = 0.5f;
         }
 
-        difficultyTimer = 0;
+        for (EnemyType type : enemyTypes) {
+            type.vida += 8;
+            type.ataque += 2;
+            type.timer = 0;
+        }
+
+        enemyCastle.vida += 50;
+        enemyCastle.vidaMax += 50;
         dinero = 0;
+        intervaloDinero = (float) (intervaloDinero - 0.02);
     }
     
     private void mostrarMensajeNivelSuperado() {
