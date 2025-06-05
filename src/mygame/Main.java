@@ -29,7 +29,7 @@ public class Main extends SimpleApplication {
     public static final List<AnimatedPlayer> players = new ArrayList<>();
     private final List<EnemyType> enemyTypes = new ArrayList<>();
 
-    private float spawnAcceleration = 0.10f;
+    private float spawnAcceleration = 0.90f;
 
     private static Castle playerCastle;
     private static Castle enemyCastle;
@@ -43,6 +43,7 @@ public class Main extends SimpleApplication {
     private BitmapText textoNivel;
     private BitmapText mensajeNivelSuperado;
     private BitmapText mensajeDerrota;
+    private boolean enPausa = false;
 
     
     private final Map<String, Integer> enemyRewards = new HashMap<>();
@@ -53,6 +54,7 @@ public class Main extends SimpleApplication {
         settings.setTitle("Tower Defense");
         settings.setResolution(1280, 720);
         app.setSettings(settings);
+        app.setShowSettings(false);
         app.start();
     }
 
@@ -115,7 +117,9 @@ public class Main extends SimpleApplication {
         inputManager.addMapping("SpawnW", new KeyTrigger(KeyInput.KEY_W));
         inputManager.addMapping("SpawnE", new KeyTrigger(KeyInput.KEY_E));
         inputManager.addMapping("SpawnR", new KeyTrigger(KeyInput.KEY_R));
-        inputManager.addListener(actionListener, "SpawnQ", "SpawnW", "SpawnE", "SpawnR");
+        inputManager.addMapping("Pausa", new KeyTrigger(KeyInput.KEY_P));
+        inputManager.addMapping("lvlUp", new KeyTrigger(KeyInput.KEY_RSHIFT));
+        inputManager.addListener(actionListener, "SpawnQ", "SpawnW", "SpawnE", "SpawnR", "Pausa", "lvlUp");
         
         enemyRewards.put("Roca", 0);
         enemyRewards.put("Garrote", 5);
@@ -145,22 +149,33 @@ public class Main extends SimpleApplication {
                 break;
             case "SpawnW":
                 if (dinero >= 10) {
-                    spawnAnimatedPlayer("Textures/CaminaGarrote/caminaGarrote_", "Textures/PegaGarrote/pegaGarrote_", 30, 214, 80, 20, "Garrote");
+                    spawnAnimatedPlayer("Textures/CaminaGarrote/caminaGarrote_", "Textures/PegaGarrote/pegaGarrote_", 30, 214, 100, 20, "Garrote");
                     dinero -= 10;
                 }
                 break;
             case "SpawnE":
                 if (dinero >= 15) {
-                    spawnAnimatedPlayer("Textures/CaminaAntorcha/caminaAntorcha_", "Textures/PegaAntorcha/pegaAntorcha_", 30, 214, 100, 25, "Antorcha");
+                    spawnAnimatedPlayer("Textures/CaminaAntorcha/caminaAntorcha_", "Textures/PegaAntorcha/pegaAntorcha_", 30, 214, 140, 25, "Antorcha");
                     dinero -= 15;
                 }
                 break;
             case "SpawnR":
                 if (dinero >= 30) {
-                    spawnAnimatedPlayer("Textures/CaminaHorquilla/caminaHorquilla_", "Textures/PegaHorquilla/pegaHorquilla_", 30, 214, 140, 35, "Horquilla");
+                    spawnAnimatedPlayer("Textures/CaminaHorquilla/caminaHorquilla_", "Textures/PegaHorquilla/pegaHorquilla_", 30, 214, 220, 35, "Horquilla");
                     dinero -= 30;
                 }
                 break;
+            case "Pausa":
+                if(!enPausa){
+                    enPausa = true;
+                } else if(!playerCastle.isDestroyed()){
+                    enPausa = false;
+                }
+                break;
+            case "lvlUp":
+                subirNivel();
+                break;
+                
         }
         textoDinero.setText("Dinero: " + dinero); // Actualiza el texto
     };
@@ -178,7 +193,7 @@ public class Main extends SimpleApplication {
 
     @Override
     public void simpleUpdate(float tpf) {
-        if(playerCastle.isDestroyed()) return;
+        if(playerCastle.isDestroyed() || enPausa) return;
         
         // Generar dinero automáticamente
         dineroTimer += tpf;
@@ -502,7 +517,7 @@ public class Main extends SimpleApplication {
         enemyCastle.vida += 50;
         enemyCastle.vidaMax += 50;
         dinero = 0;
-        intervaloDinero = (float) (intervaloDinero - 0.02);
+        intervaloDinero = (float) (intervaloDinero - 0.05);
     }
     
     private void mostrarMensajeNivelSuperado() {
@@ -542,12 +557,11 @@ public class Main extends SimpleApplication {
             @Override
             public void run() {
                 enqueue(() -> {
-                    guiNode.detachChild(mensajeDerrota);
                     stop();
+                    System.exit(0);
                     return null;
                 });
             }
         }, 5000);
     }
-
 }
