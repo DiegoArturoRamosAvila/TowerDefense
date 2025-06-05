@@ -8,7 +8,6 @@ import com.jme3.input.controls.ActionListener;
 import com.jme3.input.controls.KeyTrigger;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
-import com.jme3.math.Vector3f;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.shape.Quad;
@@ -67,7 +66,7 @@ public class Main extends SimpleApplication {
         bg.setHeight(settings.getHeight());
         guiNode.attachChild(bg);
         
-        float button = 30f; // Posición vertical fija
+        float button = 30f; // Posición vertical fija para las imagenes de costo.
         Picture qPic = new Picture("Q");
         qPic.setImage(assetManager, "Textures/RocaPrecio.png", true);
         qPic.setWidth(128);
@@ -104,7 +103,7 @@ public class Main extends SimpleApplication {
         textoDinero.setText("Dinero: 0");
         guiNode.attachChild(textoDinero);
 
-        // Inicializar castillos con hitbox virtual
+        // Castillos con hitbox virtual
         playerCastle = new Castle(assetManager, guiNode, 25, 50, 500, false);
         enemyCastle = new Castle(assetManager, guiNode, 1150, 50, 35, true);
 
@@ -180,13 +179,13 @@ public class Main extends SimpleApplication {
         textoDinero.setText("Dinero: " + dinero); // Actualiza el texto
     };
 
-    private void spawnAnimatedPlayer(String idlePrefix, String attackPrefix, float startX, float startY, int vida, int ataque, String tipo) {
-        AnimatedPlayer player = new AnimatedPlayer(assetManager, guiNode, idlePrefix, attackPrefix, 64, 64, startX, startY, 100f, false, vida, ataque, tipo);
+    private void spawnAnimatedPlayer(String caminaPrefix, String ataquePrefix, float startX, float startY, int vida, int ataque, String tipo) {
+        AnimatedPlayer player = new AnimatedPlayer(assetManager, guiNode, caminaPrefix, ataquePrefix, 64, 64, startX, startY, 100f, false, vida, ataque, tipo);
         players.add(player);
     }
 
-    private void spawnEnemyPlayer(String idlePrefix, String attackPrefix, float startX, float startY, int vida, int ataque, String tipo) {
-        AnimatedPlayer enemy = new AnimatedPlayer(assetManager, guiNode, idlePrefix, attackPrefix, 64, 64, startX, startY, -100f, true, vida, ataque, tipo);
+    private void spawnEnemyPlayer(String caminaPrefix, String ataquePrefix, float startX, float startY, int vida, int ataque, String tipo) {
+        AnimatedPlayer enemy = new AnimatedPlayer(assetManager, guiNode, caminaPrefix, ataquePrefix, 64, 64, startX, startY, -100f, true, vida, ataque, tipo);
         enemy.setEndX(45f);
         players.add(enemy);
     }
@@ -214,7 +213,7 @@ public class Main extends SimpleApplication {
         for (EnemyType type : enemyTypes) {
             type.timer += tpf;
             if (type.timer >= type.spawnInterval) {
-                spawnEnemyPlayer(type.idlePrefix, type.attackPrefix, 1200, type.startY, type.vida, type.ataque, type.tipo);
+                spawnEnemyPlayer(type.caminaPrefix, type.ataquePrefix, 1200, type.startY, type.vida, type.ataque, type.tipo);
                 type.timer = 0;
             }
         }
@@ -327,17 +326,17 @@ public class Main extends SimpleApplication {
 
         int vida;
         int ataque;
-        float attackCooldown = 1f;
-        float attackTimer = 0f;
+        float ataqueCooldown = 1f;
+        float ataqueTimer = 0f;
         float stoppedTime = 0f;
 
         public AnimatedPlayer(AssetManager assetManager, Node guiNode,
-                              String idlePrefix, String attackPrefix,
+                              String caminaPrefix, String ataquePrefix,
                               float width, float height, float startX, float startY,
                               float speed, boolean isEnemy, int vida, int ataque, String tipo) {
 
             this.picture = new Picture("Player");
-            picture.setImage(assetManager, idlePrefix + "0.png", true);
+            picture.setImage(assetManager, caminaPrefix + "0.png", true);
             picture.setWidth(width);
             picture.setHeight(height);
             picture.setPosition(startX, startY);
@@ -349,10 +348,10 @@ public class Main extends SimpleApplication {
             this.ataque = ataque;
             this.tipo = tipo;
 
-            animations.put("idle", new FrameAnimator(picture, generateFrames(idlePrefix), assetManager, 8));
-            animations.put("attack", new FrameAnimator(picture, generateFrames(attackPrefix), assetManager, 8));
-            currentAnimator = animations.get("idle");
-            currentAnimationName = "idle";
+            animations.put("camina", new FrameAnimator(picture, generateFrames(caminaPrefix), assetManager, 8));
+            animations.put("ataque", new FrameAnimator(picture, generateFrames(ataquePrefix), assetManager, 8));
+            currentAnimator = animations.get("camina");
+            currentAnimationName = "camina";
             currentAnimator.play();
         }
 
@@ -366,24 +365,24 @@ public class Main extends SimpleApplication {
             if (!isStopped) {
                 picture.move(speed * tpf, 0, 0);
                 if (hasReachedEnd()) {
-                    attackCastle();
+                    ataqueCastle();
                     picture.removeFromParent();
                     Main.players.remove(this);
                     return;
                 }
             } else {
                 stoppedTime += tpf;
-                attackTimer += tpf;
+                ataqueTimer += tpf;
 
-                if (attackTimer >= attackCooldown) {
-                    attackNearby();
-                    attackTimer = 0f;
+                if (ataqueTimer >= ataqueCooldown) {
+                    ataqueNearby();
+                    ataqueTimer = 0f;
                 }
             }
             currentAnimator.update(tpf);
         }
 
-        private void attackCastle() {
+        private void ataqueCastle() {
             if (isEnemy) {
                 Main.playerCastle.takeDamage(ataque);
             } else {
@@ -391,7 +390,7 @@ public class Main extends SimpleApplication {
             }
         }
 
-        private void attackNearby() {
+        private void ataqueNearby() {
             for (AnimatedPlayer other : Main.players) {
                 if (other == this || other.isEnemy == this.isEnemy) continue;
 
@@ -422,14 +421,14 @@ public class Main extends SimpleApplication {
             isStopped = true;
             stoppedTime = 0f;
             if(!playerCastle.isDestroyed()){
-                setAnimation("attack");
+                setAnimation("ataque");
             }
         }
 
         public void resume() {
             isStopped = false;
-            attackTimer = 0f;
-            setAnimation("idle");
+            ataqueTimer = 0f;
+            setAnimation("camina");
         }
 
         public void setAnimation(String name) {
@@ -456,13 +455,13 @@ public class Main extends SimpleApplication {
     }
 
     private static class EnemyType {
-        String idlePrefix, attackPrefix, tipo;
+        String caminaPrefix, ataquePrefix, tipo;
         float startY, spawnInterval, spawnIntervalOriginal, timer = 0;
         int vida, ataque;
 
-        public EnemyType(String idlePrefix, String attackPrefix, float startY, float spawnInterval, int vida, int ataque, String tipo) {
-            this.idlePrefix = idlePrefix;
-            this.attackPrefix = attackPrefix;
+        public EnemyType(String caminaPrefix, String ataquePrefix, float startY, float spawnInterval, int vida, int ataque, String tipo) {
+            this.caminaPrefix = caminaPrefix;
+            this.ataquePrefix = ataquePrefix;
             this.startY = startY;
             this.spawnInterval = spawnInterval;
             this.spawnIntervalOriginal = spawnInterval; // guarda el valor inicial
@@ -514,7 +513,6 @@ public class Main extends SimpleApplication {
             type.timer = 0;
         }
 
-        enemyCastle.vida += 50;
         enemyCastle.vidaMax += 50;
         dinero = 0;
         intervaloDinero = (float) (intervaloDinero - 0.05);
@@ -562,6 +560,6 @@ public class Main extends SimpleApplication {
                     return null;
                 });
             }
-        }, 5000);
+        }, 3000);
     }
 }
