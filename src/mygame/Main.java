@@ -29,7 +29,7 @@ public class Main extends SimpleApplication {
     public static final List<AnimatedPlayer> players = new ArrayList<>();
     private final List<EnemyType> enemyTypes = new ArrayList<>();
 
-    private float spawnAcceleration = 0.90f;
+    private float spawnAcceleration = 0.10f;
 
     private static Castle playerCastle;
     private static Castle enemyCastle;
@@ -42,6 +42,7 @@ public class Main extends SimpleApplication {
     private int nivelActual = 1;
     private BitmapText textoNivel;
     private BitmapText mensajeNivelSuperado;
+    private BitmapText mensajeDerrota;
 
     
     private final Map<String, Integer> enemyRewards = new HashMap<>();
@@ -177,6 +178,8 @@ public class Main extends SimpleApplication {
 
     @Override
     public void simpleUpdate(float tpf) {
+        if(playerCastle.isDestroyed()) return;
+        
         // Generar dinero automáticamente
         dineroTimer += tpf;
         if (dineroTimer >= intervaloDinero) {
@@ -203,8 +206,8 @@ public class Main extends SimpleApplication {
 
         // Verificar victoria o derrota
         if (playerCastle.isDestroyed()) {
+            mostrarMensajeDerrota();
             System.out.println("¡Has perdido!");
-            stop();
         } else if (enemyCastle.isDestroyed()) {
             subirNivel();
         }
@@ -403,7 +406,9 @@ public class Main extends SimpleApplication {
         public void stop() {
             isStopped = true;
             stoppedTime = 0f;
-            setAnimation("attack");
+            if(!playerCastle.isDestroyed()){
+                setAnimation("attack");
+            }
         }
 
         public void resume() {
@@ -467,9 +472,9 @@ public class Main extends SimpleApplication {
         enemyCastle.vida = enemyCastle.vidaMax;
         enemyCastle.updateHealthBar();
 
-        // Limpiar tropas de ambas listas
+        // Limpiar tropas
         for (AnimatedPlayer p : new ArrayList<>(players)) {
-            p.picture.removeFromParent(); // quita el sprite de la pantalla
+            p.picture.removeFromParent();
         }
         players.clear();
         
@@ -504,12 +509,11 @@ public class Main extends SimpleApplication {
         mensajeNivelSuperado = new BitmapText(guiFont, false);
         mensajeNivelSuperado.setSize(guiFont.getCharSet().getRenderedSize() * 2);
         mensajeNivelSuperado.setColor(ColorRGBA.Yellow);
-        mensajeNivelSuperado.setText("¡Nivel superado!");
+        mensajeNivelSuperado.setText("¡Nivel Superado!");
         mensajeNivelSuperado.setLocalTranslation(settings.getWidth() / 2 - mensajeNivelSuperado.getLineWidth() / 2,
                                                  settings.getHeight() / 2, 0);
         guiNode.attachChild(mensajeNivelSuperado);
 
-        // Ocultar el mensaje después de 5 segundos
         Timer timer = new Timer();
         timer.schedule(new TimerTask() {
             @Override
@@ -519,6 +523,31 @@ public class Main extends SimpleApplication {
                     return null;
                 });
             }
+        }, 3000);
+    }
+    
+    private void mostrarMensajeDerrota() {
+        mensajeDerrota = new BitmapText(guiFont, false);
+        mensajeDerrota.setSize(guiFont.getCharSet().getRenderedSize() * 2); 
+        mensajeDerrota.setColor(ColorRGBA.Red);
+        mensajeDerrota.setText("¡Has Perdido!");
+        mensajeDerrota.setLocalTranslation(settings.getWidth() / 2 - mensajeDerrota.getLineWidth() / 2,
+                                           settings.getHeight() / 2, 0);
+        guiNode.attachChild(mensajeDerrota);
+        
+        players.clear();
+        
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                enqueue(() -> {
+                    guiNode.detachChild(mensajeDerrota);
+                    stop();
+                    return null;
+                });
+            }
         }, 5000);
     }
+
 }
