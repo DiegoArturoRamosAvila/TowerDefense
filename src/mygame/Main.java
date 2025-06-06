@@ -2,6 +2,9 @@ package mygame;
 
 import com.jme3.app.SimpleApplication;
 import com.jme3.asset.AssetManager;
+import com.jme3.audio.AudioData;
+import com.jme3.audio.AudioData.DataType;
+import com.jme3.audio.AudioNode;
 import com.jme3.font.BitmapText;
 import com.jme3.input.KeyInput;
 import com.jme3.input.controls.ActionListener;
@@ -19,6 +22,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -43,6 +47,10 @@ public class Main extends SimpleApplication {
     private BitmapText mensajeNivelSuperado;
     private BitmapText mensajeDerrota;
     private boolean enPausa = false;
+    
+    private AudioNode musicaFondo;
+    private AudioNode sonidoNivelUp;
+    private AudioNode sonidoDerrota;
 
     
     private final Map<String, Integer> enemyRewards = new HashMap<>();
@@ -131,6 +139,21 @@ public class Main extends SimpleApplication {
         textoNivel.setText("Nivel: " + nivelActual);
         textoNivel.setLocalTranslation(settings.getWidth() - 200, settings.getHeight() - 20, 0);
         guiNode.attachChild(textoNivel);
+        
+        musicaFondo = new AudioNode(assetManager, "Sounds/regular_battle.wav", DataType.Stream);
+        musicaFondo.setLooping(true);
+        musicaFondo.setPositional(false);
+        musicaFondo.setVolume(1f);
+        rootNode.attachChild(musicaFondo);
+        musicaFondo.play();
+
+        sonidoNivelUp = new AudioNode(assetManager, "Sounds/winneris.ogg", DataType.Buffer);
+        sonidoNivelUp.setPositional(false);
+        rootNode.attachChild(sonidoNivelUp);
+
+        sonidoDerrota = new AudioNode(assetManager, "Sounds/death_bell_sound_effect.wav", DataType.Buffer);
+        sonidoDerrota.setPositional(false);
+        rootNode.attachChild(sonidoDerrota);
     }
     
     public static Main instance() {
@@ -414,6 +437,7 @@ public class Main extends SimpleApplication {
                     Integer recompensa = Main.instance().enemyRewards.getOrDefault(tipo, 0);
                     Main.instance().agregarDinero(recompensa);
                 }
+                AudioMuerte.playRandomDeathSound(instancia.assetManager, instancia.rootNode);
             }
         }
 
@@ -479,6 +503,8 @@ public class Main extends SimpleApplication {
     private void subirNivel() {
         nivelActual++;
         textoNivel.setText("Nivel: " + nivelActual);
+        musicaFondo.pause();
+        sonidoNivelUp.playInstance();
 
         // Reiniciar vida de las torres
         playerCastle.vida = playerCastle.vidaMax;
@@ -533,6 +559,7 @@ public class Main extends SimpleApplication {
             public void run() {
                 enqueue(() -> {
                     guiNode.detachChild(mensajeNivelSuperado);
+                    musicaFondo.play();
                     return null;
                 });
             }
@@ -540,6 +567,8 @@ public class Main extends SimpleApplication {
     }
     
     private void mostrarMensajeDerrota() {
+        musicaFondo.stop();
+        sonidoDerrota.playInstance();
         mensajeDerrota = new BitmapText(guiFont, false);
         mensajeDerrota.setSize(guiFont.getCharSet().getRenderedSize() * 2); 
         mensajeDerrota.setColor(ColorRGBA.Red);
@@ -560,6 +589,34 @@ public class Main extends SimpleApplication {
                     return null;
                 });
             }
-        }, 3000);
+        }, 3500);
+    }
+    
+    public class AudioMuerte {
+        private static final String[] deathSounds = {
+            "Sounds/Death/death1.wav",
+            "Sounds/Death/death2.wav",
+            "Sounds/Death/death3.wav",
+            "Sounds/Death/death4.wav",
+            "Sounds/Death/death5.wav",
+            "Sounds/Death/death6.wav",
+            "Sounds/Death/death7.wav",
+            "Sounds/Death/death8.wav",
+            "Sounds/Death/death9.wav",
+            "Sounds/Death/death10.wav",
+            "Sounds/Death/death11.wav"
+        };
+
+        private static final Random rand = new Random();
+
+        public static void playRandomDeathSound(AssetManager assetManager, Node rootNode) {
+            int index = rand.nextInt(deathSounds.length);
+            AudioNode deathSound = new AudioNode(assetManager, deathSounds[index], AudioData.DataType.Buffer);
+            deathSound.setPositional(false);
+            deathSound.setLooping(false);
+            deathSound.setVolume(0.4f);
+            rootNode.attachChild(deathSound);
+            deathSound.play();
+        }
     }
 }
