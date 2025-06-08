@@ -51,14 +51,21 @@ public class Main extends SimpleApplication {
     private AudioNode musicaFondo;
     private AudioNode sonidoNivelUp;
     private AudioNode sonidoDerrota;
-
+    private AudioNode sonidoRisa;
     
+    FrameAnimator fondoAnim;
+    String[] fFrames = new String[9];
+    private boolean animandoFondo = false;
+    private float tiempoAnimacionFondo = 0f;
+    private float duracionAnimacionFondo = 1.20f; 
+    private Picture fondoBase;
+
     private final Map<String, Integer> enemyRewards = new HashMap<>();
 
     public static void main(String[] args) {
         Main app = new Main();
         AppSettings settings = new AppSettings(true);
-        settings.setTitle("Tower Defense");
+        settings.setTitle("....");
         settings.setResolution(1280, 720);
         app.setSettings(settings);
         app.setShowSettings(false);
@@ -68,11 +75,21 @@ public class Main extends SimpleApplication {
     @Override
     public void simpleInitApp() {
         instance = this;
-        Picture bg = new Picture("Fondo");
-        bg.setImage(assetManager, "Textures/Fondo.png", false);
-        bg.setWidth(settings.getWidth());
-        bg.setHeight(settings.getHeight());
-        guiNode.attachChild(bg);
+        fondoBase = new Picture("Fondo");
+        fondoBase.setImage(assetManager, "Textures/Fondo.png", false);
+        fondoBase.setWidth(settings.getWidth());
+        fondoBase.setHeight(settings.getHeight());
+        guiNode.attachChild(fondoBase);
+        fFrames[0] = "Textures/Fondo/Fondo_0.png";
+        fFrames[1] = "Textures/Fondo/Fondo_1.png";
+        fFrames[2] = "Textures/Fondo/Fondo_2.png";
+        fFrames[3] = "Textures/Fondo/Fondo_3.png";
+        fFrames[4] = "Textures/Fondo/Fondo_4.png";
+        fFrames[5] = "Textures/Fondo/Fondo_5.png";
+        fFrames[6] = "Textures/Fondo/Fondo_6.png";
+        fFrames[7] = "Textures/Fondo/Fondo_7.png";
+        fFrames[8] = "Textures/Fondo/Fondo_8.png";
+        fondoAnim = new FrameAnimator(fondoBase, fFrames, assetManager, 6);
         
         float button = 30f; // Posición vertical fija para las imagenes de costo.
         Picture qPic = new Picture("Q");
@@ -154,6 +171,17 @@ public class Main extends SimpleApplication {
         sonidoDerrota = new AudioNode(assetManager, "Sounds/death_bell_sound_effect.wav", DataType.Buffer);
         sonidoDerrota.setPositional(false);
         rootNode.attachChild(sonidoDerrota);
+        
+        sonidoRisa = new AudioNode(assetManager, "Sounds/risa.wav", DataType.Buffer);
+        sonidoRisa.setPositional(false);
+        rootNode.attachChild(sonidoRisa);
+    }
+    
+    private void iniciarAnimacionFondoUnaVez() {
+        animandoFondo = true;
+        tiempoAnimacionFondo = 0f;
+        fondoAnim.play();
+        sonidoRisa.playInstance();
     }
     
     public static Main instance() {
@@ -215,7 +243,20 @@ public class Main extends SimpleApplication {
 
     @Override
     public void simpleUpdate(float tpf) {
-        if(playerCastle.isDestroyed() || enPausa) return;
+        if(playerCastle.isDestroyed() || enPausa){
+            if(playerCastle.isDestroyed()) fondoBase.setImage(assetManager, "Textures/FondoFin.png", false);
+            return;
+        }
+        
+        if (animandoFondo) {
+            tiempoAnimacionFondo += tpf;
+            fondoAnim.update(tpf);
+            if (tiempoAnimacionFondo >= duracionAnimacionFondo) {
+                animandoFondo = false;
+                fondoAnim.pause();
+                fondoBase.setImage(assetManager, "Textures/Fondo.png", false); // vuelve al fondo normal
+            }
+        }
         
         // Generar dinero automáticamente
         dineroTimer += tpf;
@@ -505,6 +546,7 @@ public class Main extends SimpleApplication {
         textoNivel.setText("Nivel: " + nivelActual);
         musicaFondo.pause();
         sonidoNivelUp.playInstance();
+        fondoAnim.play();
 
         // Reiniciar vida de las torres
         playerCastle.vida = playerCastle.vidaMax;
@@ -552,7 +594,9 @@ public class Main extends SimpleApplication {
         mensajeNivelSuperado.setLocalTranslation(settings.getWidth() / 2 - mensajeNivelSuperado.getLineWidth() / 2,
                                                  settings.getHeight() / 2, 0);
         guiNode.attachChild(mensajeNivelSuperado);
-
+        
+        iniciarAnimacionFondoUnaVez();
+        
         Timer timer = new Timer();
         timer.schedule(new TimerTask() {
             @Override
